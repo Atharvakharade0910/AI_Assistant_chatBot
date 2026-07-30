@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SimpleChat AI with streaming and SQLite history">
+  <title>AI Assistant</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div><h1>SimpleChat</h1><span>AI Assistant</span></div>
+      <button class="icon mobile-close" id="closeSidebar">×</button>
+    </div>
+    <button class="new-chat" id="newChatButton">＋ New chat</button>
+    <div class="search"><span>⌕</span><input id="searchInput" placeholder="Search chats"></div>
+    <div class="history-label">Recent chats</div>
+    <div class="conversation-list" id="conversationList"></div>
+    <button class="clear-all" id="clearAllButton">Clear all history</button>
+    <div class="local-note"><span></span> Stored locally in SQLite</div>
+  </aside>
+
+  <section class="main">
+    <header class="topbar">
+      <button class="icon menu" id="menuButton">☰</button>
+      <div class="title"><h2 id="chatTitle">New Chat</h2><small id="chatSubtitle">Streaming enabled</small></div>
+      <button class="icon" id="renameButton" title="Rename">✎</button>
+      <button class="icon" id="themeButton" title="Theme">☾</button>
+      <button class="icon danger" id="deleteButton" title="Delete">⌫</button>
+    </header>
+
+    <main class="messages" id="messages"></main>
+
+    <footer class="composer-wrap">
+      <div class="composer">
+        <textarea id="messageInput" rows="1" maxlength="8000" placeholder="Ask anything..."></textarea>
+        <button class="send" id="sendButton">➤</button>
+        <button class="stop hidden" id="stopButton">■</button>
+      </div>
+      <div class="help">Enter to send · Shift + Enter for new line</div>
+    </footer>
+  </section>
+</div>
+
+<div class="modal-backdrop hidden" id="renameModal">
+  <div class="modal">
+    <h3>Rename conversation</h3>
+    <input id="renameInput" maxlength="100">
+    <div class="modal-actions">
+      <button id="cancelRename">Cancel</button>
+      <button class="primary" id="saveRename">Save</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
