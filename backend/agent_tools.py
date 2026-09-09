@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import operator
 import urllib.parse
 import urllib.request
@@ -9,12 +10,15 @@ from langchain.tools import tool
 
 
 _OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv, ast.Pow: operator.pow, ast.Mod: operator.mod}
+MAX_ABS_EXPONENT = 1000
 
 
 def _calculate(node):
     if isinstance(node, ast.Expression):
         return _calculate(node.body)
-    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+        if isinstance(node.value, float) and not math.isfinite(node.value):
+            raise ValueError("Only finite numbers are allowed")
         return node.value
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
         value = _calculate(node.operand)
@@ -23,6 +27,8 @@ def _calculate(node):
         left, right = _calculate(node.left), _calculate(node.right)
         if abs(left) > 10**12 or abs(right) > 10**12:
             raise ValueError("Number too large")
+        if isinstance(node.op, ast.Pow) and abs(right) > MAX_ABS_EXPONENT:
+            raise ValueError(f"Exponent must be between -{MAX_ABS_EXPONENT} and {MAX_ABS_EXPONENT}")
         return _OPS[type(node.op)](left, right)
     raise ValueError("Only basic arithmetic is allowed")
 

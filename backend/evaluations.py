@@ -12,6 +12,8 @@ def run_evaluations():
     case("calculator correctness", calculator_result == "14", calculator_result)
     unsafe_result = calculator.invoke({"expression": "__import__('os').getcwd()"})
     case("calculator rejects code execution", "Only basic arithmetic" in unsafe_result, unsafe_result)
+    exponent_result = calculator.invoke({"expression": "2 ** 1001"})
+    case("calculator limits large exponents", "Exponent must be" in exponent_result, exponent_result)
     case("agent routes current questions", should_use_agent("What is the latest news?"), "router decision")
     case("normal chat stays on the chain", not should_use_agent("Help me write a short poem"), "router decision")
     safe, _ = check_input_guardrails("Explain FastAPI routing")

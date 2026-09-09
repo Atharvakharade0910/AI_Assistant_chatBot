@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from backend.database import db
+from backend.agent_tools import calculator
 from backend.evaluations import run_evaluations
 from backend.governance import check_input_guardrails
 
@@ -34,6 +35,10 @@ class LifecycleTests(unittest.TestCase):
         self.assertTrue(reason)
         result = run_evaluations()
         self.assertTrue(result["ok"], result)
+
+    def test_calculator_rejects_unbounded_exponents(self):
+        result = calculator.invoke({"expression": "2 ** 1001"})
+        self.assertIn("Exponent must be", result)
 
 
 if __name__ == "__main__":
