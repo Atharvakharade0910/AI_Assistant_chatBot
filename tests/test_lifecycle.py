@@ -1,11 +1,14 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
+from fastapi.testclient import TestClient
 from backend.database import db
 from backend.agent_tools import calculator
 from backend.evaluations import run_evaluations
 from backend.governance import check_input_guardrails
+from backend.main import app
 
 
 class LifecycleTests(unittest.TestCase):
@@ -39,6 +42,21 @@ class LifecycleTests(unittest.TestCase):
     def test_calculator_rejects_unbounded_exponents(self):
         result = calculator.invoke({"expression": "2 ** 1001"})
         self.assertIn("Exponent must be", result)
+
+    def test_invalid_pdf_upload_returns_a_clear_client_error(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                registration = client.post(
+                    "/api/auth/register",
+                    json={"email": "pdf@example.com", "password": "correct-horse-battery"},
+                )
+                self.assertEqual(registration.status_code, 200)
+                response = client.post(
+                    "/api/documents",
+                    files={"file": ("broken.pdf", b"not a PDF", "application/pdf")},
+                )
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["detail"], "The PDF could not be read. Upload an unencrypted, valid PDF file.")
 
 
 if __name__ == "__main__":

@@ -110,7 +110,10 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
     if filename.lower().endswith(".pdf"):
         from io import BytesIO
         from pypdf import PdfReader
-        text = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(data)).pages)
+        try:
+            text = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(data)).pages)
+        except Exception as exc:
+            raise HTTPException(422, "The PDF could not be read. Upload an unencrypted, valid PDF file.") from exc
     else:
         text = data.decode("utf-8", errors="replace")
     chunks = [text[index:index + 1400].strip() for index in range(0, len(text), 1200)]
