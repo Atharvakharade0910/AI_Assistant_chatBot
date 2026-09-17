@@ -58,6 +58,22 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"], "The PDF could not be read. Upload an unencrypted, valid PDF file.")
 
+    def test_login_normalizes_email_case_and_whitespace(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                registration = client.post(
+                    "/api/auth/register",
+                    json={"email": "member@example.com", "password": "correct-horse-battery"},
+                )
+                self.assertEqual(registration.status_code, 200)
+                client.post("/api/auth/logout")
+                response = client.post(
+                    "/api/auth/login",
+                    json={"email": "  MEMBER@EXAMPLE.COM  ", "password": "correct-horse-battery"},
+                )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["email"], "member@example.com")
+
 
 if __name__ == "__main__":
     unittest.main()

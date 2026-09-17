@@ -57,7 +57,7 @@ def register(payload: AuthRequest, response: Response):
 
 @router.post("/auth/login")
 def login(payload: AuthRequest, response: Response):
-    user = get_user_by_email(payload.email)
+    user = get_user_by_email(payload.email.strip().lower())
     if not user or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(401, "Email or password is incorrect.")
     set_session(response, user["id"])
