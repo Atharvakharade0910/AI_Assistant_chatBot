@@ -74,6 +74,16 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["email"], "member@example.com")
 
+    def test_responses_include_browser_security_headers(self):
+        with TestClient(app) as client:
+            response = client.get("/api/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["x-content-type-options"], "nosniff")
+        self.assertEqual(response.headers["x-frame-options"], "DENY")
+        self.assertEqual(response.headers["referrer-policy"], "same-origin")
+        self.assertEqual(response.headers["permissions-policy"], "geolocation=(), payment=()")
+
 
 if __name__ == "__main__":
     unittest.main()

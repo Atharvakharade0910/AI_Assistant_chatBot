@@ -16,6 +16,17 @@ app = FastAPI(
     version="2.0.0",
 )
 
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), payment=()"
+    return response
+
+
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 app.include_router(router, prefix="/api")
 
