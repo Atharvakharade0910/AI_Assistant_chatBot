@@ -74,6 +74,18 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["email"], "member@example.com")
 
+    def test_registration_rejects_malformed_email_addresses(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                for email in ("member@", "@example.com", "member@example", "member @example.com"):
+                    with self.subTest(email=email):
+                        response = client.post(
+                            "/api/auth/register",
+                            json={"email": email, "password": "correct-horse-battery"},
+                        )
+                        self.assertEqual(response.status_code, 422)
+                        self.assertEqual(response.json()["detail"], "Enter a valid email address.")
+
     def test_responses_include_browser_security_headers(self):
         with TestClient(app) as client:
             response = client.get("/api/health")

@@ -1,4 +1,5 @@
 import json
+import re
 import time
 import uuid
 from typing import AsyncGenerator
@@ -36,6 +37,8 @@ from pydantic import BaseModel, Field
 
 router = APIRouter()
 
+EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
 
 class AuthRequest(BaseModel):
     email: str = Field(min_length=5, max_length=254)
@@ -45,7 +48,7 @@ class AuthRequest(BaseModel):
 @router.post("/auth/register")
 def register(payload: AuthRequest, response: Response):
     email = payload.email.strip().lower()
-    if "@" not in email:
+    if not EMAIL_PATTERN.fullmatch(email):
         raise HTTPException(422, "Enter a valid email address.")
     try:
         user = create_user(email, hash_password(payload.password))
