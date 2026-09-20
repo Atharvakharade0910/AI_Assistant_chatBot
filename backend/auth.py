@@ -81,7 +81,11 @@ def current_user(request: Request):
         raise HTTPException(status_code=401, detail="Authentication required.")
     from backend.database.db import get_user
 
-    user = get_user(int(payload["sub"]))
+    try:
+        user_id = int(payload["sub"])
+    except (KeyError, TypeError, ValueError, OverflowError):
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    user = get_user(user_id)
     if not user:
         raise HTTPException(status_code=401, detail="Session is no longer valid.")
     return user

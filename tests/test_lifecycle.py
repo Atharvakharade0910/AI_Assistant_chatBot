@@ -8,6 +8,7 @@ from backend.database import db
 from backend.agent_tools import calculator
 from backend.evaluations import run_evaluations
 from backend.governance import check_input_guardrails
+from backend.auth import SESSION_COOKIE, _encode
 from backend.main import app
 
 
@@ -95,6 +96,15 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.headers["x-frame-options"], "DENY")
         self.assertEqual(response.headers["referrer-policy"], "same-origin")
         self.assertEqual(response.headers["permissions-policy"], "geolocation=(), payment=()")
+
+    def test_malformed_signed_session_returns_unauthorized(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                client.cookies.set(SESSION_COOKIE, _encode({"sub": "not-a-user-id", "exp": 4_102_444_800}))
+                response = client.get("/api/auth/me")
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()["detail"], "Authentication required.")
 
 
 if __name__ == "__main__":
