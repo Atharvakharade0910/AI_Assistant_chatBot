@@ -104,7 +104,11 @@ def evaluations(request: Request):
 @router.post("/documents")
 async def upload_document(request: Request, file: UploadFile = File(...)):
     user_id = current_user(request)["id"]
-    filename = file.filename or "uploaded-document"
+    # API clients can submit path-like upload names. Store only the basename so
+    # document listings cannot expose a client machine's directory structure.
+    filename = (file.filename or "uploaded-document").replace("\\", "/").rsplit("/", 1)[-1].strip()
+    if not filename:
+        filename = "uploaded-document"
     if not filename.lower().endswith((".txt", ".md", ".pdf")):
         raise HTTPException(415, "Only TXT, Markdown, and PDF files are supported.")
     data = await file.read()

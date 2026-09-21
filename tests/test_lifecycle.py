@@ -59,6 +59,22 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"], "The PDF could not be read. Upload an unencrypted, valid PDF file.")
 
+    def test_document_upload_stores_only_the_filename_basename(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                registration = client.post(
+                    "/api/auth/register",
+                    json={"email": "document@example.com", "password": "correct-horse-battery"},
+                )
+                self.assertEqual(registration.status_code, 200)
+                response = client.post(
+                    "/api/documents",
+                    files={"file": ("C:\\Users\\member\\private-notes.txt", b"Private note", "text/plain")},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "private-notes.txt")
+
     def test_login_normalizes_email_case_and_whitespace(self):
         with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
             with TestClient(app) as client:
