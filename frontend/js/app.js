@@ -158,7 +158,9 @@ async function send(text,regenerateFlag=false,regenerateMessageId=null){
           setAssistantState(event.status==="cancelled"?"Paused":"Complete",event.status==="cancelled"?"paused":"complete");
         }else if(event.type==="error"){
           assistant.row.classList.remove("thinking","speaking");assistant.row.classList.add("failed");
-          full=`**Error:** ${event.content}`;assistant.body.innerHTML=marked.parse(full);
+          const errorNote=`**Response interrupted:** ${event.content}`;
+          full=full?`${full}\n\n> ${errorNote}`:`**Error:** ${event.content}`;
+          assistant.body.dataset.raw=full;assistant.body.innerHTML=marked.parse(full);
           assistant.row.dataset.status="failed";
           toast("Response generation failed");
         }

@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -121,6 +122,32 @@ class LifecycleTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["detail"], "Authentication required.")
+
+    def test_failed_chat_stream_ends_with_a_failed_done_event(self):
+        async def failing_stream(*_args, **_kwargs):
+            yield "Partial answer"
+            raise RuntimeError("provider unavailable")
+
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with patch("backend.api.routes.stream_ai_response", failing_stream):
+                with TestClient(app) as client:
+                    registration = client.post(
+                        "/api/auth/register",
+                        json={"email": "stream@example.com", "password": "correct-horse-battery"},
+                    )
+                    self.assertEqual(registration.status_code, 200)
+                    conversation = client.post("/api/conversations", json={"title": "Streaming test"})
+                    self.assertEqual(conversation.status_code, 200)
+                    response = client.post(
+                        "/api/chat",
+                        json={"conversation_id": conversation.json()["id"], "message": "Hello"},
+                    )
+
+        self.assertEqual(response.status_code, 200)
+        events = [json.loads(line) for line in response.text.splitlines()]
+        self.assertEqual(events[0], {"type": "chunk", "content": "Partial answer"})
+        self.assertEqual(events[-2]["type"], "error")
+        self.assertEqual(events[-1], {"type": "done", "status": "failed"})
 
 
 if __name__ == "__main__":

@@ -242,6 +242,9 @@ async def chat(payload: ChatRequest, request: Request):
                 "type": "error",
                 "content": "Could not generate the AI response. Check the API key, model name, and internet connection.",
             }) + "\n"
+            # Keep the NDJSON protocol terminal for both successful and failed
+            # streams so clients can reliably finalize their UI state.
+            yield json.dumps({"type": "done", "status": "failed"}) + "\n"
 
     return StreamingResponse(
         generate(),
