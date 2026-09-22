@@ -123,6 +123,24 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["detail"], "Authentication required.")
 
+    def test_rename_rejects_a_whitespace_only_title(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                registration = client.post(
+                    "/api/auth/register",
+                    json={"email": "rename@example.com", "password": "correct-horse-battery"},
+                )
+                self.assertEqual(registration.status_code, 200)
+                conversation = client.post("/api/conversations", json={"title": "Project notes"})
+                self.assertEqual(conversation.status_code, 200)
+                response = client.patch(
+                    f"/api/conversations/{conversation.json()['id']}",
+                    json={"title": "   "},
+                )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["detail"], "Conversation title cannot be blank.")
+
     def test_failed_chat_stream_ends_with_a_failed_done_event(self):
         async def failing_stream(*_args, **_kwargs):
             yield "Partial answer"

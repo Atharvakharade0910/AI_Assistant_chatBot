@@ -147,6 +147,8 @@ def update_conversation(conversation_id: int, payload: ConversationRename, reque
     user_id = current_user(request)["id"]
     if not conversation_exists(conversation_id, user_id):
         raise HTTPException(404, "Conversation not found.")
+    if not payload.title.strip():
+        raise HTTPException(422, "Conversation title cannot be blank.")
     return rename_conversation(conversation_id, user_id, payload.title)
 
 
