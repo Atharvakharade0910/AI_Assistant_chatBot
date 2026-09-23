@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field
 router = APIRouter()
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+TRACE_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 
 
 class AuthRequest(BaseModel):
@@ -92,6 +93,8 @@ def documents(request: Request):
 @router.get("/traces")
 def traces(request: Request, trace_id: str | None = None, limit: int = 100):
     user_id = current_user(request)["id"]
+    if trace_id is not None and not TRACE_ID_PATTERN.fullmatch(trace_id):
+        raise HTTPException(422, "Trace ID must be a 32-character lowercase hexadecimal value.")
     return list_trace_events(user_id, trace_id=trace_id, limit=max(1, min(limit, 200)))
 
 
