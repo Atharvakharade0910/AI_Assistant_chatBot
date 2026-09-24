@@ -5,11 +5,13 @@ from unittest.mock import patch
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from starlette.datastructures import UploadFile
 from backend.database import db
 from backend.agent_tools import calculator
 from backend.evaluations import run_evaluations
 from backend.governance import check_input_guardrails
 from backend.auth import SESSION_COOKIE, _encode
+from backend.api import routes
 from backend.main import app
 
 
@@ -91,6 +93,31 @@ class LifecycleTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "private-notes.txt")
+
+    def test_document_upload_reads_with_a_bounded_chunk_size(self):
+        read_sizes = []
+        original_read = UploadFile.read
+
+        async def tracking_read(upload, size=-1):
+            read_sizes.append(size)
+            return await original_read(upload, size)
+
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with patch.object(UploadFile, "read", new=tracking_read):
+                with TestClient(app) as client:
+                    registration = client.post(
+                        "/api/auth/register",
+                        json={"email": "chunked-upload@example.com", "password": "correct-horse-battery"},
+                    )
+                    self.assertEqual(registration.status_code, 200)
+                    response = client.post(
+                        "/api/documents",
+                        files={"file": ("notes.txt", b"A" * 70_000, "text/plain")},
+                    )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(read_sizes), 2)
+        self.assertTrue(all(size == routes.UPLOAD_READ_CHUNK_BYTES for size in read_sizes))
 
     def test_login_normalizes_email_case_and_whitespace(self):
         with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):

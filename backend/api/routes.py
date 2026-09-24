@@ -39,6 +39,8 @@ router = APIRouter()
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 TRACE_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+UPLOAD_READ_CHUNK_BYTES = 64 * 1024
 
 
 class AuthRequest(BaseModel):
@@ -114,9 +116,14 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
         filename = "uploaded-document"
     if not filename.lower().endswith((".txt", ".md", ".pdf")):
         raise HTTPException(415, "Only TXT, Markdown, and PDF files are supported.")
-    data = await file.read()
-    if len(data) > 5 * 1024 * 1024:
-        raise HTTPException(413, "Files must be smaller than 5 MB.")
+    data_parts = []
+    received_bytes = 0
+    while chunk := await file.read(UPLOAD_READ_CHUNK_BYTES):
+        received_bytes += len(chunk)
+        if received_bytes > MAX_UPLOAD_BYTES:
+            raise HTTPException(413, "Files must be smaller than 5 MB.")
+        data_parts.append(chunk)
+    data = b"".join(data_parts)
     if filename.lower().endswith(".pdf"):
         from io import BytesIO
         from pypdf import PdfReader
