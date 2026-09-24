@@ -149,6 +149,8 @@ def remove_document(document_id: int, request: Request):
 
 @router.post("/conversations")
 def add_conversation(payload: ConversationCreate, request: Request):
+    if not payload.title.strip():
+        raise HTTPException(422, "Conversation title cannot be blank.")
     return create_conversation(current_user(request)["id"], payload.title)
 
 
