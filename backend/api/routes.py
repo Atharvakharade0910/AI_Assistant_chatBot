@@ -41,6 +41,7 @@ EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 TRACE_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 UPLOAD_READ_CHUNK_BYTES = 64 * 1024
+MAX_UPLOAD_FILENAME_LENGTH = 255
 
 
 class AuthRequest(BaseModel):
@@ -115,6 +116,8 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
     filename = (file.filename or "uploaded-document").replace("\\", "/").rsplit("/", 1)[-1].strip()
     if not filename:
         filename = "uploaded-document"
+    if len(filename) > MAX_UPLOAD_FILENAME_LENGTH:
+        raise HTTPException(422, "Document filenames must be 255 characters or fewer.")
     if not filename.lower().endswith((".txt", ".md", ".pdf")):
         raise HTTPException(415, "Only TXT, Markdown, and PDF files are supported.")
     data_parts = []

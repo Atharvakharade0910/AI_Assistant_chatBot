@@ -107,6 +107,24 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "private-notes.txt")
 
+    def test_document_upload_rejects_an_oversized_filename(self):
+        filename = f"{'a' * 252}.txt"
+
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                registration = client.post(
+                    "/api/auth/register",
+                    json={"email": "long-filename@example.com", "password": "correct-horse-battery"},
+                )
+                self.assertEqual(registration.status_code, 200)
+                response = client.post(
+                    "/api/documents",
+                    files={"file": (filename, b"Private note", "text/plain")},
+                )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["detail"], "Document filenames must be 255 characters or fewer.")
+
     def test_document_upload_reads_with_a_bounded_chunk_size(self):
         read_sizes = []
         original_read = UploadFile.read
