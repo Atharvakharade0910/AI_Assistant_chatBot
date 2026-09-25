@@ -4,7 +4,7 @@ import time
 import uuid
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlite3 import IntegrityError
 
@@ -93,11 +93,12 @@ def documents(request: Request):
 
 
 @router.get("/traces")
-def traces(request: Request, trace_id: str | None = None, limit: int = 100):
+def traces(request: Request, trace_id: str | None = None,
+           limit: int = Query(default=100, ge=1, le=200)):
     user_id = current_user(request)["id"]
     if trace_id is not None and not TRACE_ID_PATTERN.fullmatch(trace_id):
         raise HTTPException(422, "Trace ID must be a 32-character lowercase hexadecimal value.")
-    return list_trace_events(user_id, trace_id=trace_id, limit=max(1, min(limit, 200)))
+    return list_trace_events(user_id, trace_id=trace_id, limit=limit)
 
 
 @router.get("/evaluations")
