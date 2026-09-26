@@ -89,8 +89,8 @@ def conversations(request: Request):
 
 
 @router.get("/documents")
-def documents(request: Request):
-    return list_documents(current_user(request)["id"])
+def documents(request: Request, limit: int = Query(default=100, ge=1, le=200)):
+    return list_documents(current_user(request)["id"], limit=limit)
 
 
 @router.get("/traces")
