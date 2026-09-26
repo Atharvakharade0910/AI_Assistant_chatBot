@@ -187,6 +187,7 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(response.headers["x-frame-options"], "DENY")
         self.assertEqual(response.headers["referrer-policy"], "same-origin")
         self.assertEqual(response.headers["permissions-policy"], "geolocation=(), payment=()")
+        self.assertEqual(response.headers["cache-control"], "no-store")
 
     def test_malformed_signed_session_returns_unauthorized(self):
         with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):

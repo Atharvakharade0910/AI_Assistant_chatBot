@@ -24,6 +24,10 @@ async def add_security_headers(request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "same-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), payment=()"
+    # API responses can contain account, conversation, document, or trace
+    # metadata. Do not leave those responses in a browser or intermediary cache.
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 
