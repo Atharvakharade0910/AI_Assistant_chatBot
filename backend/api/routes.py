@@ -2,9 +2,9 @@ import json
 import re
 import time
 import uuid
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
 
-from fastapi import APIRouter, File, HTTPException, Query, Request, Response, UploadFile
+from fastapi import APIRouter, File, HTTPException, Path, Query, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlite3 import IntegrityError
 
@@ -159,7 +159,8 @@ def add_conversation(payload: ConversationCreate, request: Request):
 
 
 @router.patch("/conversations/{conversation_id}")
-def update_conversation(conversation_id: int, payload: ConversationRename, request: Request):
+def update_conversation(conversation_id: Annotated[int, Path(ge=1)], payload: ConversationRename,
+                        request: Request):
     user_id = current_user(request)["id"]
     if not conversation_exists(conversation_id, user_id):
         raise HTTPException(404, "Conversation not found.")
@@ -169,7 +170,7 @@ def update_conversation(conversation_id: int, payload: ConversationRename, reque
 
 
 @router.delete("/conversations/{conversation_id}")
-def remove_conversation(conversation_id: int, request: Request):
+def remove_conversation(conversation_id: Annotated[int, Path(ge=1)], request: Request):
     user_id = current_user(request)["id"]
     if not conversation_exists(conversation_id, user_id):
         raise HTTPException(404, "Conversation not found.")
@@ -184,7 +185,7 @@ def remove_all_conversations(request: Request):
 
 
 @router.get("/conversations/{conversation_id}/messages")
-def conversation_messages(conversation_id: int, request: Request):
+def conversation_messages(conversation_id: Annotated[int, Path(ge=1)], request: Request):
     user_id = current_user(request)["id"]
     if not conversation_exists(conversation_id, user_id):
         raise HTTPException(404, "Conversation not found.")
