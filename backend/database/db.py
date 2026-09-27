@@ -169,11 +169,12 @@ def create_conversation(user_id, title="New Chat"):
     return {"id": conversation_id, "title": title, "created_at": now, "updated_at": now}
 
 
-def list_conversations(user_id):
+def list_conversations(user_id, limit=100):
     with get_connection() as connection:
         rows = connection.execute(
-            "SELECT id,title,created_at,updated_at FROM conversations WHERE user_id=? ORDER BY updated_at DESC",
-            (user_id,),
+            "SELECT id,title,created_at,updated_at FROM conversations "
+            "WHERE user_id=? ORDER BY updated_at DESC, id DESC LIMIT ?",
+            (user_id, limit),
         ).fetchall()
     return [dict(row) for row in rows]
 

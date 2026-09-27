@@ -84,8 +84,8 @@ def me(request: Request):
 
 
 @router.get("/conversations")
-def conversations(request: Request):
-    return list_conversations(current_user(request)["id"])
+def conversations(request: Request, limit: int = Query(default=100, ge=1, le=200)):
+    return list_conversations(current_user(request)["id"], limit=limit)
 
 
 @router.get("/documents")
