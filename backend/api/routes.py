@@ -145,7 +145,7 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
 
 
 @router.delete("/documents/{document_id}")
-def remove_document(document_id: int, request: Request):
+def remove_document(document_id: Annotated[int, Path(ge=1)], request: Request):
     if not delete_document(document_id, current_user(request)["id"]):
         raise HTTPException(404, "Document not found.")
     return {"message": "Document deleted."}
