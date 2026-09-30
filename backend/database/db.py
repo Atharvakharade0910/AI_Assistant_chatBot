@@ -133,7 +133,8 @@ def create_document(user_id, filename, chunks):
 def list_documents(user_id, limit=100):
     with get_connection() as connection:
         rows = connection.execute(
-            "SELECT id,filename,created_at FROM documents WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+            "SELECT id,filename,created_at FROM documents WHERE user_id=? "
+            "ORDER BY created_at DESC, id DESC LIMIT ?",
             (user_id, limit),
         ).fetchall()
     return [dict(row) for row in rows]

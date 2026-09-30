@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from backend.database import db
 
@@ -44,6 +45,16 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual([message["content"] for message in remaining], [
             "Question one", "Question two", "Answer two"
         ])
+
+    def test_document_list_uses_id_to_break_timestamp_ties(self):
+        user = db.create_user("documents@example.com", "hash")
+        with patch("backend.database.db.utc_now", return_value="2026-09-30T00:00:00+00:00"):
+            first = db.create_document(user["id"], "first.txt", ["First document"])
+            second = db.create_document(user["id"], "second.txt", ["Second document"])
+
+        documents = db.list_documents(user["id"])
+
+        self.assertEqual([document["id"] for document in documents], [second["id"], first["id"]])
 
 
 if __name__ == "__main__":
