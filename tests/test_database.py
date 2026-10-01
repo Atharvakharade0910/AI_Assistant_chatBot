@@ -56,6 +56,12 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual([document["id"] for document in documents], [second["id"], first["id"]])
 
+    def test_trace_list_has_a_user_newest_first_index(self):
+        with db.get_connection() as connection:
+            indexes = {row[1] for row in connection.execute("PRAGMA index_list('trace_events')")}
+
+        self.assertIn("idx_trace_events_user_id", indexes)
+
 
 if __name__ == "__main__":
     unittest.main()

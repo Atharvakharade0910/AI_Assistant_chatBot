@@ -85,6 +85,10 @@ def initialize_database():
         connection.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON conversations(user_id, updated_at DESC)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_document_chunks_user ON document_chunks(user_id)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_trace_events_user_created ON trace_events(user_id, created_at DESC)")
+        # The unfiltered traces endpoint retrieves a user's newest events by
+        # descending primary key. Keep that common query index-backed as a
+        # user's trace history grows.
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_trace_events_user_id ON trace_events(user_id, id DESC)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_trace_events_trace ON trace_events(trace_id, id)")
 
 
