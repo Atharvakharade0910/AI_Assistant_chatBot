@@ -117,6 +117,24 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(messages.status_code, 422)
         self.assertEqual(chat.status_code, 422)
 
+    def test_message_list_rejects_limits_outside_the_documented_range(self):
+        with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
+            with TestClient(app) as client:
+                registration = client.post(
+                    "/api/auth/register",
+                    json={"email": "message-limits@example.com", "password": "correct-horse-battery"},
+                )
+                self.assertEqual(registration.status_code, 200)
+                conversation = client.post("/api/conversations", json={"title": "Message limits"})
+                self.assertEqual(conversation.status_code, 200)
+                conversation_id = conversation.json()["id"]
+                for limit in (0, 201):
+                    with self.subTest(limit=limit):
+                        response = client.get(
+                            f"/api/conversations/{conversation_id}/messages", params={"limit": limit}
+                        )
+                        self.assertEqual(response.status_code, 422)
+
     def test_document_deletion_rejects_non_positive_ids(self):
         with patch.dict("os.environ", {"SESSION_SECRET": "test-session-secret"}):
             with TestClient(app) as client:

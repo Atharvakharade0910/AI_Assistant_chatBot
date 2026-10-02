@@ -185,11 +185,12 @@ def remove_all_conversations(request: Request):
 
 
 @router.get("/conversations/{conversation_id}/messages")
-def conversation_messages(conversation_id: Annotated[int, Path(ge=1)], request: Request):
+def conversation_messages(conversation_id: Annotated[int, Path(ge=1)], request: Request,
+                          limit: int = Query(default=100, ge=1, le=200)):
     user_id = current_user(request)["id"]
     if not conversation_exists(conversation_id, user_id):
         raise HTTPException(404, "Conversation not found.")
-    return get_messages(conversation_id, user_id)
+    return get_messages(conversation_id, user_id, limit=limit)
 
 
 @router.post("/chat")

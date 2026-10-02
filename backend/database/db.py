@@ -233,13 +233,15 @@ def save_message(conversation_id, user_id, role, content, status="complete"):
         )
 
 
-def get_messages(conversation_id, user_id):
+def get_messages(conversation_id, user_id, limit=100):
     with get_connection() as connection:
         rows = connection.execute(
+            "SELECT id,role,content,status,created_at FROM ("
             "SELECT m.id,m.role,m.content,m.status,m.created_at FROM messages m "
             "JOIN conversations c ON c.id=m.conversation_id "
-            "WHERE m.conversation_id=? AND c.user_id=? ORDER BY m.id",
-            (conversation_id, user_id),
+            "WHERE m.conversation_id=? AND c.user_id=? ORDER BY m.id DESC LIMIT ?"
+            ") ORDER BY id",
+            (conversation_id, user_id, limit),
         ).fetchall()
     return [dict(row) for row in rows]
 

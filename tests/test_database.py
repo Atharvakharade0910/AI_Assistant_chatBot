@@ -30,6 +30,16 @@ class DatabaseTests(unittest.TestCase):
         db.delete_conversation(conversation["id"], user["id"])
         self.assertFalse(db.conversation_exists(conversation["id"], user["id"]))
 
+    def test_message_list_limits_to_the_newest_messages_in_chronological_order(self):
+        user = db.create_user("message-limits@example.com", "hash")
+        conversation = db.create_conversation(user["id"])
+        db.save_message(conversation["id"], user["id"], "user", "First")
+        db.save_message(conversation["id"], user["id"], "assistant", "Second")
+
+        messages = db.get_messages(conversation["id"], user["id"], limit=1)
+
+        self.assertEqual([message["content"] for message in messages], ["Second"])
+
     def test_targeted_assistant_deletion(self):
         user = db.create_user("target@example.com", "hash")
         conversation = db.create_conversation(user["id"])
