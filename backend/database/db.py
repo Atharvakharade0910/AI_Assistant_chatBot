@@ -83,6 +83,9 @@ def initialize_database():
         if "status" not in message_columns:
             connection.execute("ALTER TABLE messages ADD COLUMN status TEXT NOT NULL DEFAULT 'complete'")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON conversations(user_id, updated_at DESC)")
+        # Document listings retrieve a user's newest uploads first. Keep that
+        # user-scoped ordering index-backed as a document library grows.
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_documents_user_created ON documents(user_id, created_at DESC, id DESC)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_document_chunks_user ON document_chunks(user_id)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_trace_events_user_created ON trace_events(user_id, created_at DESC)")
         # The unfiltered traces endpoint retrieves a user's newest events by
