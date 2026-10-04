@@ -78,6 +78,16 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertIn("idx_documents_user_created", indexes)
 
+    def test_conversation_list_index_includes_its_timestamp_tiebreaker(self):
+        with db.get_connection() as connection:
+            columns = [
+                (row[2], row[3])
+                for row in connection.execute("PRAGMA index_xinfo('idx_conversations_user_updated')")
+                if row[5]
+            ]
+
+        self.assertEqual(columns, [("user_id", 0), ("updated_at", 1), ("id", 1)])
+
 
 if __name__ == "__main__":
     unittest.main()

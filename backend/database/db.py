@@ -82,7 +82,22 @@ def initialize_database():
         message_columns = {row[1] for row in connection.execute("PRAGMA table_info(messages)")}
         if "status" not in message_columns:
             connection.execute("ALTER TABLE messages ADD COLUMN status TEXT NOT NULL DEFAULT 'complete'")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON conversations(user_id, updated_at DESC)")
+        # Conversation listings use both columns as a newest-first ordering
+        # key. Include the ID tie-breaker so SQLite can satisfy that order from
+        # the user-scoped index even when multiple updates share a timestamp.
+        conversation_index_columns = [
+            (row[2], row[3])
+            for row in connection.execute("PRAGMA index_xinfo('idx_conversations_user_updated')")
+            if row[5]
+        ]
+        if conversation_index_columns and conversation_index_columns != [
+            ("user_id", 0), ("updated_at", 1), ("id", 1)
+        ]:
+            connection.execute("DROP INDEX idx_conversations_user_updated")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_conversations_user_updated "
+            "ON conversations(user_id, updated_at DESC, id DESC)"
+        )
         # Document listings retrieve a user's newest uploads first. Keep that
         # user-scoped ordering index-backed as a document library grows.
         connection.execute("CREATE INDEX IF NOT EXISTS idx_documents_user_created ON documents(user_id, created_at DESC, id DESC)")
